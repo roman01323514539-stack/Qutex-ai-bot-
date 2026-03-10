@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roman. QUTEX.Ai.bot</title>
+    <style>
+        /* --- ডিজাইন এবং এনিমেশন --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #000; color: #fff; font-family: 'Courier New', monospace; text-align: center; }
+
+        .bot-card {
+            width: 380px; /* কার্ড একটু বড় করা হয়েছে */
+            background: #080808;
+            border: 2px solid #00ff00;
+            border-radius: 20px;
+            padding: 15px;
+            margin: 20px auto;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+            position: relative;
+        }
+
+        /* ব্যানার স্লাইডার - বড় করা হয়েছে */
+        .banner-container {
+            width: 100%;
+            height: 200px; /* উচ্চতা ১২০ থেকে ২০০ করা হয়েছে */
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .banner-slide {
+            width: 100%;
+            height: 100%;
+            display: none;
+            object-fit: contain; /* ছবি পুরো এবং বড় দেখাবে, কাটবে না */
+        }
+
+        .brand-name { color: #00ff00; font-size: 20px; font-weight: bold; text-shadow: 0 0 10px #00ff00; margin-bottom: 15px; }
+
+        /* ইমেজ স্ক্যানার এরিয়া */
+        .image-container {
+            width: 100%;
+            height: 180px;
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            border-radius: 10px;
+            position: relative;
+            margin-bottom: 15px;
+            overflow: hidden;
+            background: #111;
+            display: flex; justify-content: center; align-items: center;
+        }
+        #previewImg { max-width: 100%; max-height: 100%; display: none; }
+        .scanner-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: #00ff00; box-shadow: 0 0 15px #00ff00;
+            display: none; z-index: 10;
+        }
+        @keyframes scan { 
+            0% { top: 0; } 
+            50% { top: 100%; } 
+            100% { top: 0; } 
+        }
+
+        /* রেজাল্ট সার্কেল */
+        .result-circle {
+            width: 140px; 
+            height: 140px; 
+            border: 4px solid #00ff00; 
+            border-radius: 50%;
+            margin: 0 auto 15px; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center;
+            font-size: 24px; 
+            font-weight: bold; 
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            transition: 0.5s;
+        }
+
+        .btn {
+            width: 100%; background: #00ff00; color: #000; border: none;
+            padding: 15px; font-weight: bold; border-radius: 10px; cursor: pointer;
+            box-shadow: 0 0 15px #00ff00; text-transform: uppercase; font-size: 16px;
+        }
+
+        /* Admin Panel Modal */
+        #adminPanel {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #111; border: 2px solid #00ff00; padding: 20px; z-index: 100;
+            width: 90%; max-width: 340px; border-radius: 15px;
+        }
+        .admin-input { width: 100%; padding: 10px; margin: 8px 0; background: #000; color: #00ff00; border: 1px solid #00ff00; font-size: 12px; }
+        .admin-btn { background: #00ff00; color: #000; border: none; padding: 12px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; border-radius: 5px;}
+    </style>
+</head>
+<body>
+
+<div class="bot-card">
+    <div class="banner-container" id="bannerBox">
+        <p style="font-size: 12px; color: #555;">ব্যানার সেট করতে অ্যাডমিন লগইন করুন</p>
+    </div>
+
+    <div class="brand-name">Roman. QUTEX.Ai.bot</div>
+
+    <div class="image-container" onclick="document.getElementById('fileInput').click()">
+        <div class="scanner-line" id="scannerLine"></div>
+        <input type="file" id="fileInput" hidden accept="image/*">
+        <p id="placeholderText" style="color: #00ff00; font-size: 12px;">📁 ২০ সেকেন্ডের চার্ট ছবি দিন</p>
+        <img id="previewImg">
+    </div>
+
+    <div class="result-circle" id="resultDisplay">
+        <span id="resText">READY</span>
+    </div>
+
+    <button class="btn" onclick="startScanning()">GET SIGNAL (2s)</button>
+    
+    <p onclick="openAdmin()" style="font-size: 10px; margin-top: 20px; color: #222; cursor: pointer;">Admin Login</p>
+</div>
+
+<div id="adminPanel">
+    <h3 style="color: #00ff00; margin-bottom: 15px;">Admin Panel</h3>
+    <div id="inputList"></div>
+    <button class="admin-btn" onclick="saveBanners()">ব্যানার আপডেট করুন</button>
+    <button class="admin-btn" style="background: red; color: white;" onclick="closeAdmin()">বন্ধ করুন</button>
+</div>
+
+<script>
+    // আপনার Gemini API Key এখানে সরাসরি বসিয়ে দেওয়া হয়েছে
+    const API_KEY = "AIzaSyDkfeHs9_R0Hdxp7QhGCMB1uRi9Zk4AY10"; 
+
+    let banners = JSON.parse(localStorage.getItem('botBanners')) || [];
+
+    function openAdmin() {
+        const pass = prompt("Admin Password দিন:");
+        if(pass === "1234") { 
+            document.getElementById('adminPanel').style.display = 'block';
+            let html = "";
+            for(let i=0; i<10; i++) {
+                html += `<input type="text" class="admin-input" id="link${i}" placeholder="Banner Link ${i+1}" value="${banners[i] || ''}">`;
+            }
+            document.getElementById('inputList').innerHTML = html;
+        } else if(pass !== null) { alert("ভুল পাসওয়ার্ড!"); }
+    }
+
+    function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+
+    function saveBanners() {
+        let newBanners = [];
+        for(let i=0; i<10; i++) {
+            let val = document.getElementById(`link${i}`).value.trim();
+            if(val) newBanners.push(val);
+        }
+        localStorage.setItem('botBanners', JSON.stringify(newBanners));
+        alert("ব্যানার আপডেট হয়েছে!");
+        location.reload();
+    }
+
+    function startSlider() {
+        const box = document.getElementById('bannerBox');
+        if(banners.length > 0) {
+            box.innerHTML = banners.map(link => `<img src="${link}" class="banner-slide">`).join('');
+            let current = 0;
+            const slides = document.querySelectorAll('.banner-slide');
+            function showNext() {
+                slides.forEach(s => s.style.display = 'none');
+                slides[current].style.display = 'block';
+                current = (current + 1) % slides.length;
+            }
+            showNext();
+            setInterval(showNext, 3000);
+        }
+    }
+    startSlider();
+
+    const fileInput = document.getElementById('fileInput');
+    const previewImg = document.getElementById('previewImg');
+    const scannerLine = document.getElementById('scannerLine');
+    const resultDisplay = document.getElementById('resultDisplay');
+    const resText = document.getElementById('resText');
+
+    fileInput.onchange = () => {
+        const file = fileInput.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                document.getElementById('placeholderText').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    async function startScanning() {
+        if (!fileInput.files[0]) { alert("আগে ছবি আপলোড দিন!"); return; }
+        
+        scannerLine.style.display = 'block';
+        scannerLine.style.animation = 'scan 0.5s infinite linear';
+        resText.innerText = "SCAN..";
+        
+        try {
+            const base64Img = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(fileInput.files[0]);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: "Predict UP or DOWN for 0:00 mark from this 0:20 Quotex chart. Output ONE word only." },
+                        { inline_data: { mime_type: "image/jpeg", data: base64Img } }
+                    ]
+                }]
+            };
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            const signal = data.candidates[0].content.parts[0].text.toUpperCase().trim();
+
+            scannerLine.style.display = 'none';
+            
+            if (signal.includes("UP")) {
+                resText.innerHTML = "UP <br> ↑";
+                resultDisplay.style.color = "#00ff00";
+                resultDisplay.style.borderColor = "#00ff00";
+                resultDisplay.style.boxShadow = "0 0 25px #00ff00";
+            } else {
+                resText.innerHTML = "DOWN <br> ↓";
+                resultDisplay.style.color = "#ff4444";
+                resultDisplay.style.borderColor = "#ff4444";
+                resultDisplay.style.boxShadow = "0 0 25px #ff4444";
+            }
+        } catch (e) {
+            resText.innerText = "ERROR";
+            scannerLine.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
