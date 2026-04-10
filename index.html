@@ -29,20 +29,29 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         button:disabled { opacity: 0.7; cursor: not-allowed; }
         .number-card { transition: all 0.2s ease; cursor: pointer; }
-        .number-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(247, 148, 29, 0.2); border-color: #F7941D !important; }
-        .number-card:active { transform: scale(0.98); }
+        .number-card:hover { transform: translateY(-2px); border-color: #F7941D !important; }
         .nagad-input:focus { box-shadow: 0 0 0 3px rgba(247, 148, 29, 0.2); border-color: #F7941D; outline: none; }
         .btn-pulse:active { transform: scale(0.97); }
-        .realistic-card { box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.05); }
+        .video-help {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 1rem;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid #f59e0b;
+        }
+        .video-help:hover { transform: scale(1.02); }
+        .video-help a { color: #92400e; text-decoration: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen px-4 py-8">
 
-    <div class="max-w-md w-full realistic-card">
+    <div class="max-w-md w-full">
         <div class="bg-white rounded-3xl overflow-hidden shadow-2xl">
             <div class="nagad-orange p-6 relative">
                 <div class="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -mr-20 -mt-20"></div>
-                <div class="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16"></div>
                 <div class="flex justify-between items-center relative z-10">
                     <div class="flex items-center gap-3">
                         <div class="bg-white rounded-xl p-2 shadow-lg">
@@ -66,6 +75,16 @@
             </div>
 
             <div class="p-6">
+                <!-- Video Help Section -->
+                <div class="video-help" onclick="window.open('https://youtu.be/7h8Ww73tSos?si=MKBDFqTgLC_LG3HA', '_blank')">
+                    <a href="#" onclick="return false;">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M10 15l5-3-5-3v6z"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                        </svg>
+                        🎥 কিভাবে ডিপোজিট ও ডেলিভারি চার্জ দিবেন? ভিডিও দেখুন
+                    </a>
+                </div>
+
                 <div id="payment-type-badge" class="mb-4 text-center">
                     <span id="payment-type-text" class="text-xs font-bold px-4 py-2 rounded-full bg-gray-100 text-gray-600">ডেলিভারি চার্জ</span>
                 </div>
@@ -119,7 +138,6 @@
     <div id="toastMsg" class="toast-custom"></div>
 
     <script>
-        // Firebase Config (আপনার মূল প্রোজেক্ট)
         const firebaseConfig = {
             apiKey: "AIzaSyCTsWCt67Yq4loUn1oUbNJZ2vBrPpXZbvI",
             authDomain: "my-apps-1a158.firebaseapp.com",
@@ -217,14 +235,12 @@
                     return;
                 }
                 
-                // main payment request
                 await db.ref('payment_requests').push().set({
                     userId: userInfo.userId, userName: userInfo.userName, userPhone: userPhone,
                     amount: payAmount, transactionId: finalTrx, method: "Nagad", type: type,
                     orderId: orderId, status: "pending", createdAt: new Date().toISOString()
                 });
                 
-                // type specific request
                 if(type === 'delivery') {
                     await db.ref('delivery_requests').push().set({
                         userId: userInfo.userId, userName: userInfo.userName, userPhone: userPhone,
@@ -254,7 +270,6 @@
             }
         };
         
-        // Load Nagad number from settings
         db.ref('settings').on('value', (snapshot) => {
             const settings = snapshot.val();
             numberSpan.innerText = (settings && settings.nagadNumber) ? settings.nagadNumber : "01750069517";
@@ -273,5 +288,5 @@
         console.log("✅ নগদ পেমেন্ট সিস্টেম রেডি | টাইপ:", type);
     </script>
 </body>
-</html>                    
-                
+</html>
+                                            
