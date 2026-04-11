@@ -12,8 +12,6 @@
         * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
         body { background: linear-gradient(135deg, #FFF5E6 0%, #FFE8D6 100%); }
         .nagad-orange { background: linear-gradient(135deg, #F7941D 0%, #E07C1A 100%); }
-        .nagad-text { color: #F7941D; }
-        .nagad-bg-light { background: linear-gradient(135deg, #FFF8F0 0%, #FFF2E6 100%); }
         .toast-custom {
             visibility: hidden; min-width: 280px; background: #1F2937; color: white;
             text-align: center; border-radius: 1rem; padding: 14px 20px; position: fixed;
@@ -35,7 +33,7 @@
         .video-help {
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             border-radius: 1rem;
-            padding: 0.8rem;
+            padding: 1rem;
             margin-bottom: 1rem;
             text-align: center;
             cursor: pointer;
@@ -43,7 +41,28 @@
             border: 1px solid #f59e0b;
         }
         .video-help:hover { transform: scale(1.02); }
-        .video-help a { color: #92400e; text-decoration: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .video-help a { color: #92400e; text-decoration: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; }
+        .payment-type-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .payment-type-delivery { background: #dbeafe; color: #1e40af; }
+        .payment-type-deposit { background: #dcfce7; color: #166534; }
+        .nagad-number-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            border: 2px dashed #fed7aa;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nagad-number-card:hover { border-color: #F7941D; background: #fff7ed; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen px-4 py-8">
@@ -75,18 +94,17 @@
             </div>
 
             <div class="p-6">
-                <!-- Video Help Section -->
-                <div class="video-help" onclick="window.open('https://youtu.be/7h8Ww73tSos?si=MKBDFqTgLC_LG3HA', '_blank')">
+                <div id="video-help-container" class="video-help" style="display:none;" onclick="openVideo()">
                     <a href="#" onclick="return false;">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M10 15l5-3-5-3v6z"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
                         </svg>
-                        🎥 কিভাবে ডিপোজিট ও ডেলিভারি চার্জ দিবেন? ভিডিও দেখুন
+                        🎥 <span id="video-help-text">কিভাবে পেমেন্ট করবেন? ভিডিও দেখে আসুন</span>
                     </a>
                 </div>
 
-                <div id="payment-type-badge" class="mb-4 text-center">
-                    <span id="payment-type-text" class="text-xs font-bold px-4 py-2 rounded-full bg-gray-100 text-gray-600">ডেলিভারি চার্জ</span>
+                <div class="mb-4 text-center">
+                    <span id="payment-type-badge" class="payment-type-badge payment-type-delivery">ডেলিভারি চার্জ</span>
                 </div>
 
                 <div class="nagad-bg-light rounded-2xl p-4 mb-7 border-l-4 border-[#F7941D]">
@@ -102,18 +120,11 @@
 
                 <div class="mb-8">
                     <label class="text-[11px] font-bold text-gray-500 uppercase block mb-2">নগদ নম্বর</label>
-                    <div id="number-card" onclick="copyNumber()" class="number-card bg-gradient-to-r from-orange-50 to-white border-2 border-orange-200 rounded-2xl p-5">
-                        <div class="flex items-center justify-between">
-                            <span id="display-number" class="text-3xl font-black text-gray-800">লোড হচ্ছে...</span>
-                            <div class="nagad-orange text-white p-3 rounded-xl">📋</div>
-                        </div>
+                    <div id="number-card" onclick="copyNumber()" class="nagad-number-card">
+                        <span id="display-number" class="text-3xl font-black text-gray-800">লোড হচ্ছে...</span>
+                        <div class="nagad-orange text-white p-3 rounded-xl">📋</div>
                     </div>
                     <p class="text-[10px] text-gray-400 text-center mt-2">🔁 নম্বর কপি করতে ক্লিক করুন</p>
-                </div>
-
-                <div class="mb-5">
-                    <label class="text-[11px] font-bold text-gray-500 uppercase block mb-2">আপনার মোবাইল নাম্বার (রেজিস্টারকৃত)</label>
-                    <input type="tel" id="user-phone" placeholder="01XXXXXXXXX" class="w-full p-4 bg-gray-50 border-2 border-gray-200 focus:border-[#F7941D] focus:outline-none text-center font-mono font-bold rounded-2xl nagad-input">
                 </div>
 
                 <div class="space-y-5">
@@ -154,9 +165,12 @@
         const amountSpan = document.getElementById('display-amount');
         const numberSpan = document.getElementById('display-number');
         const trxInput = document.getElementById('trx-input');
-        const userPhoneInput = document.getElementById('user-phone');
         const submitBtn = document.getElementById('submit-btn');
-        const paymentTypeText = document.getElementById('payment-type-text');
+        const paymentTypeBadge = document.getElementById('payment-type-badge');
+        const videoHelpContainer = document.getElementById('video-help-container');
+        const videoHelpText = document.getElementById('video-help-text');
+        
+        let currentVideoLink = "";
         
         const urlParams = new URLSearchParams(window.location.search);
         const amount = urlParams.get('amount') || "0";
@@ -166,11 +180,11 @@
         amountSpan.innerText = amount;
         
         if(type === 'deposit') {
-            paymentTypeText.innerText = "ডিপোজিট (টাকা জমা)";
-            paymentTypeText.className = "text-xs font-bold px-4 py-2 rounded-full bg-green-100 text-green-600";
+            paymentTypeBadge.textContent = "ডিপোজিট (টাকা জমা)";
+            paymentTypeBadge.className = "payment-type-badge payment-type-deposit";
         } else {
-            paymentTypeText.innerText = "ডেলিভারি চার্জ";
-            paymentTypeText.className = "text-xs font-bold px-4 py-2 rounded-full bg-blue-100 text-blue-600";
+            paymentTypeBadge.textContent = "ডেলিভারি চার্জ";
+            paymentTypeBadge.className = "payment-type-badge payment-type-delivery";
         }
         
         function showToast(message, isError = false) {
@@ -179,6 +193,14 @@
             toast.style.background = isError ? "rgba(220, 38, 38, 0.95)" : "rgba(31, 41, 55, 0.95)";
             toast.className = "toast-custom show";
             setTimeout(() => toast.className = "toast-custom", 3000);
+        }
+        
+        function openVideo() {
+            if(currentVideoLink) {
+                window.open(currentVideoLink, '_blank');
+            } else {
+                showToast("❌ ভিডিও লিংক পাওয়া যায়নি!", true);
+            }
         }
         
         async function isTrxIdUnique(trxId) {
@@ -190,26 +212,12 @@
             } catch(err) { return false; }
         }
         
-        async function findUserByPhone(phone) {
-            try {
-                const snapshot = await db.ref('users').once('value');
-                const users = snapshot.val();
-                if(users) {
-                    for(const [id, user] of Object.entries(users)) {
-                        if(user.phone === phone) return { userId: id, userName: user.name };
-                    }
-                }
-                return null;
-            } catch(e) { return null; }
-        }
-        
         window.sendPayment = async function() {
             const trx = trxInput.value.trim();
-            const userPhone = userPhoneInput.value.trim();
-            
-            if(!trx) { showToast("❌ TrxID দিন!", true); return; }
-            if(!userPhone) { showToast("❌ আপনার মোবাইল নাম্বার দিন!", true); return; }
-            if(userPhone.length < 11) { showToast("❌ সঠিক মোবাইল নাম্বার দিন!", true); return; }
+            if(!trx) {
+                showToast("❌ TrxID দিন!", true);
+                return;
+            }
             
             const finalTrx = trx.toUpperCase();
             const payAmount = parseFloat(amount);
@@ -227,37 +235,37 @@
                     return;
                 }
                 
-                const userInfo = await findUserByPhone(userPhone);
-                if(!userInfo) {
-                    showToast("❌ এই নাম্বারে কোনো ইউজার পাওয়া যায়নি!", true);
-                    submitBtn.innerHTML = `পেমেন্ট নিশ্চিত করুন`;
-                    submitBtn.disabled = false;
-                    return;
-                }
-                
                 await db.ref('payment_requests').push().set({
-                    userId: userInfo.userId, userName: userInfo.userName, userPhone: userPhone,
-                    amount: payAmount, transactionId: finalTrx, method: "Nagad", type: type,
-                    orderId: orderId, status: "pending", createdAt: new Date().toISOString()
+                    transactionId: finalTrx,
+                    amount: payAmount,
+                    method: "Nagad",
+                    type: type,
+                    orderId: orderId,
+                    status: "pending",
+                    createdAt: new Date().toISOString()
                 });
                 
                 if(type === 'delivery') {
                     await db.ref('delivery_requests').push().set({
-                        userId: userInfo.userId, userName: userInfo.userName, userPhone: userPhone,
-                        amount: payAmount, transactionId: finalTrx, method: "Nagad", orderId: orderId,
-                        status: "pending", createdAt: new Date().toISOString()
+                        transactionId: finalTrx,
+                        amount: payAmount,
+                        method: "Nagad",
+                        orderId: orderId,
+                        status: "pending",
+                        createdAt: new Date().toISOString()
                     });
                 } else if(type === 'deposit') {
                     await db.ref('deposit_requests').push().set({
-                        userId: userInfo.userId, userName: userInfo.userName, userPhone: userPhone,
-                        amount: payAmount, transactionId: finalTrx, method: "Nagad",
-                        status: "pending", createdAt: new Date().toISOString()
+                        transactionId: finalTrx,
+                        amount: payAmount,
+                        method: "Nagad",
+                        status: "pending",
+                        createdAt: new Date().toISOString()
                     });
                 }
                 
                 showToast(`✅ ${type === 'deposit' ? 'ডিপোজিট' : 'পেমেন্ট'} রিকোয়েস্ট সফল!`);
                 trxInput.value = "";
-                userPhoneInput.value = "";
                 submitBtn.innerHTML = `পেমেন্ট নিশ্চিত করুন`;
                 submitBtn.disabled = false;
                 
@@ -272,7 +280,19 @@
         
         db.ref('settings').on('value', (snapshot) => {
             const settings = snapshot.val();
-            numberSpan.innerText = (settings && settings.nagadNumber) ? settings.nagadNumber : "01750069517";
+            if(settings) {
+                numberSpan.innerText = settings.nagadNumber || "01750069517";
+                currentVideoLink = settings.nagadVideoLink || "";
+                if(currentVideoLink) {
+                    videoHelpContainer.style.display = "block";
+                    videoHelpText.innerHTML = "🎥 কিভাবে পেমেন্ট করবেন? ভিডিও দেখে আসুন";
+                } else {
+                    videoHelpContainer.style.display = "none";
+                }
+            } else {
+                numberSpan.innerText = "01750069517";
+                videoHelpContainer.style.display = "none";
+            }
         });
         
         window.copyNumber = function() {
@@ -283,10 +303,8 @@
         
         trxInput.addEventListener("input", function(e) { this.value = this.value.toUpperCase(); });
         trxInput.addEventListener("keypress", (e) => { if(e.key === "Enter") sendPayment(); });
-        userPhoneInput.addEventListener("keypress", (e) => { if(e.key === "Enter") sendPayment(); });
         
         console.log("✅ নগদ পেমেন্ট সিস্টেম রেডি | টাইপ:", type);
     </script>
 </body>
 </html>
-                                            
