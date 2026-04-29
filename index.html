@@ -3,308 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>নগদ পেমেন্ট গেটওয়ে | Life GrowBD</title>
+    <title>নগদ পেমেন্ট গেটওয়ে | Sotota Shop</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-        body { background: linear-gradient(135deg, #FFF5E6 0%, #FFE8D6 100%); }
+        body { background: #fdfdfd; }
         .nagad-orange { background: linear-gradient(135deg, #F7941D 0%, #E07C1A 100%); }
+        .nagad-text { color: #F7941D; }
+        
         .toast-custom {
             visibility: hidden; min-width: 280px; background: #1F2937; color: white;
             text-align: center; border-radius: 1rem; padding: 14px 20px; position: fixed;
             z-index: 1000; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
-            opacity: 0; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            font-weight: 600; backdrop-filter: blur(10px); background: rgba(31, 41, 55, 0.95);
+            opacity: 0; transition: all 0.3s ease; font-weight: 600;
         }
         .toast-custom.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+        
         .loading-spinner {
             display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%; border-top-color: white; animation: spin 0.6s linear infinite; margin-right: 10px;
+            border-radius: 50%; border-top-color: white; animation: spin 0.6s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        button:disabled { opacity: 0.7; cursor: not-allowed; }
-        .number-card { transition: all 0.2s ease; cursor: pointer; }
-        .number-card:hover { transform: translateY(-2px); border-color: #F7941D !important; }
-        .nagad-input:focus { box-shadow: 0 0 0 3px rgba(247, 148, 29, 0.2); border-color: #F7941D; outline: none; }
-        .btn-pulse:active { transform: scale(0.97); }
-        .video-help {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-radius: 1rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid #f59e0b;
+
+        .banner-container::-webkit-scrollbar { display: none; }
+        .banner-container { -ms-overflow-style: none; scrollbar-width: none; }
+        .banner-img { 
+            width: 160px; height: 95px; object-fit: cover; border-radius: 15px; 
+            flex-shrink: 0; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .video-help:hover { transform: scale(1.02); }
-        .video-help a { color: #92400e; text-decoration: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; }
-        .payment-type-badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.75rem;
-            font-weight: bold;
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%; animation: shimmer 1.5s infinite;
         }
-        .payment-type-delivery { background: #dbeafe; color: #1e40af; }
-        .payment-type-deposit { background: #dcfce7; color: #166534; }
-        .nagad-number-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 1rem;
-            border: 2px dashed #fed7aa;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .nagad-number-card:hover { border-color: #F7941D; background: #fff7ed; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen px-4 py-8">
+<body class="flex flex-col items-center justify-center min-h-screen px-4 py-6 bg-gray-50">
 
-    <div class="max-w-md w-full">
-        <div class="bg-white rounded-3xl overflow-hidden shadow-2xl">
-            <div class="nagad-orange p-6 relative">
-                <div class="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -mr-20 -mt-20"></div>
-                <div class="flex justify-between items-center relative z-10">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-white rounded-xl p-2 shadow-lg">
-                            <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none">
-                                <path d="M12 2L15 8H9L12 2Z" fill="#F7941D"/>
-                                <path d="M12 22L9 16H15L12 22Z" fill="#F7941D"/>
-                                <rect x="4" y="8" width="16" height="8" rx="2" fill="white"/>
-                                <text x="12" y="14" text-anchor="middle" fill="#F7941D" font-size="8" font-weight="bold">NAGAD</text>
-                            </svg>
-                        </div>
-                        <div>
-                            <h1 class="text-white font-black text-2xl tracking-tight">Life GrowBD</h1>
-                            <p class="text-white/80 text-[10px] font-bold tracking-wider">নগদ সেন্ড মানি পেমেন্ট</p>
-                        </div>
+    <div class="max-w-md w-full bg-white rounded-[35px] shadow-2xl overflow-hidden border border-gray-100">
+        
+        <!-- Header -->
+        <div class="nagad-orange p-6 text-white flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-white p-2 rounded-xl shadow-inner">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nagad_Logo.svg/1200px-Nagad_Logo.svg.png" class="w-8 h-8 object-contain">
+                </div>
+                <div>
+                    <h1 class="font-black text-xl">নগদ পেমেন্ট</h1>
+                    <p class="text-[9px] opacity-80 font-bold uppercase tracking-widest">Sotota Shop Official</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-bold opacity-70">পেমেন্ট পরিমাণ</p>
+                <h2 class="text-3xl font-black">৳ <span id="display-amount">0</span></h2>
+            </div>
+        </div>
+
+        <div class="py-6">
+            <!-- Order Info (ছোট করে দেখানো) -->
+            <div class="px-6 mb-4">
+                <div class="bg-gray-50 rounded-xl p-3 text-sm">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-gray-500">অর্ডার আইডি:</span>
+                        <span id="order-id" class="font-mono text-xs text-gray-700">-</span>
                     </div>
-                    <div class="text-white text-right">
-                        <p class="text-[9px] uppercase font-bold opacity-80">পেবল অ্যামাউন্ট</p>
-                        <h2 class="text-3xl font-black">৳ <span id="display-amount">0</span></h2>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">পেমেন্ট মেথড:</span>
+                        <span class="font-semibold nagad-text">নগদ</span>
                     </div>
                 </div>
             </div>
 
-            <div class="p-6">
-                <div id="video-help-container" class="video-help" style="display:none;" onclick="openVideo()">
-                    <a href="#" onclick="return false;">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M10 15l5-3-5-3v6z"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                        </svg>
-                        🎥 <span id="video-help-text">কিভাবে পেমেন্ট করবেন? ভিডিও দেখে আসুন</span>
-                    </a>
+            <!-- Dynamic Banner Section -->
+            <div class="px-6 mb-6">
+                <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-3 ml-1">কিভাবে টাকা পাঠাবেন? (ধাপগুলো দেখুন)</label>
+                <div id="banner-list" class="flex gap-3 overflow-x-auto banner-container pb-2">
+                    <div class="banner-img shimmer"></div>
+                    <div class="banner-img shimmer"></div>
+                    <div class="banner-img shimmer"></div>
+                </div>
+            </div>
+
+            <div class="px-6">
+                <!-- Instruction Alert -->
+                <div class="bg-orange-50 border-l-4 border-[#F7941D] p-4 rounded-2xl mb-6">
+                    <p class="text-xs font-bold text-gray-700">
+                        📱 নিচের <span class="nagad-text underline">পার্সোনাল</span> নম্বরে <span class="nagad-text">Send Money</span> করুন। টাকা পাঠানোর পর ট্রানজেকশন আইডি (TrxID) দিন।
+                    </p>
                 </div>
 
-                <div class="mb-4 text-center">
-                    <span id="payment-type-badge" class="payment-type-badge payment-type-delivery">ডেলিভারি চার্জ</span>
-                </div>
-
-                <div class="nagad-bg-light rounded-2xl p-4 mb-7 border-l-4 border-[#F7941D]">
-                    <div class="flex gap-3">
-                        <div class="text-2xl">📱</div>
-                        <div>
-                            <p class="text-sm font-bold text-gray-800 mb-1">নগদ নম্বরে টাকা পাঠান</p>
-                            <p class="text-xs text-gray-600">নিচের নগদ নম্বরে Send Money করুন। টাকা পাঠানোর পর TrxID টি দিন।</p>
-                            <p class="text-[10px] text-orange-600 mt-2">⚠️ একটি TrxID শুধুমাত্র একবার ব্যবহার করা যাবে</p>
+                <!-- Number Card -->
+                <div class="mb-8">
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2 ml-1">নগদ পার্সোনাল নম্বর</label>
+                    <div onclick="copyNumber()" id="number-card" class="bg-gradient-to-br from-white to-gray-50 border-2 border-orange-100 rounded-3xl p-5 flex items-center justify-between cursor-pointer active:scale-95 transition-all">
+                        <div class="flex-1">
+                            <span id="display-number" class="text-3xl font-black text-gray-800 tracking-tight">লোড হচ্ছে...</span>
+                            <p class="text-[10px] text-gray-400 mt-1">🔁 কপি করতে এখানে ক্লিক করুন</p>
+                        </div>
+                        <div class="nagad-orange text-white p-3 rounded-2xl">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         </div>
                     </div>
                 </div>
 
-                <div class="mb-8">
-                    <label class="text-[11px] font-bold text-gray-500 uppercase block mb-2">নগদ নম্বর</label>
-                    <div id="number-card" onclick="copyNumber()" class="nagad-number-card">
-                        <span id="display-number" class="text-3xl font-black text-gray-800">লোড হচ্ছে...</span>
-                        <div class="nagad-orange text-white p-3 rounded-xl">📋</div>
-                    </div>
-                    <p class="text-[10px] text-gray-400 text-center mt-2">🔁 নম্বর কপি করতে ক্লিক করুন</p>
-                </div>
-
+                <!-- TrxID Input -->
                 <div class="space-y-5">
                     <div>
-                        <label class="text-[11px] font-bold text-gray-500 uppercase block mb-2">ট্রানজেকশন আইডি (TrxID)</label>
-                        <input type="text" id="trx-input" placeholder="যেমন: 8N7A9X2K5L" class="w-full p-5 bg-gray-50 border-2 border-gray-200 rounded-2xl text-center font-mono font-bold text-lg uppercase nagad-input">
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-2 ml-1">ট্রানজেকশন আইডি (TrxID)</label>
+                        <input type="text" id="trx-input" placeholder="8N7A9X2K5L" autocomplete="off" 
+                               class="w-full p-5 bg-gray-50 border-2 border-gray-100 rounded-3xl text-center font-mono font-bold text-xl uppercase focus:border-[#F7941D] outline-none transition-all">
                     </div>
                     
-                    <button id="submit-btn" onclick="sendPayment()" class="w-full nagad-orange text-white font-bold py-5 rounded-2xl shadow-xl uppercase text-sm tracking-wider flex items-center justify-center gap-2 btn-pulse">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <button id="submit-btn" onclick="sendPayment()" 
+                            class="w-full nagad-orange text-white font-bold py-5 rounded-[20px] shadow-lg shadow-orange-200 uppercase text-sm tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2">
                         পেমেন্ট নিশ্চিত করুন
                     </button>
                 </div>
-
-                <div class="mt-6 pt-4 border-t border-gray-100 text-center text-[10px] text-gray-400">
-                    <span>🔒 SSL নিরাপদ</span> • <span>Life GrowBD</span> • <span>২৪/৭ সাপোর্ট</span>
-                </div>
             </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
+            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">🔒 SSL Secured • Sotota Shop Payment Gateway</p>
         </div>
     </div>
 
-    <div id="toastMsg" class="toast-custom"></div>
+    <!-- Toast Notification -->
+    <div id="toastMsg" class="toast-custom">✨ নগদ নম্বর কপি হয়েছে!</div>
 
     <script>
+        // Firebase কনফিগারেশন
         const firebaseConfig = {
-            apiKey: "AIzaSyCTsWCt67Yq4loUn1oUbNJZ2vBrPpXZbvI",
-            authDomain: "my-apps-1a158.firebaseapp.com",
-            projectId: "my-apps-1a158",
-            storageBucket: "my-apps-1a158.firebasestorage.app",
-            messagingSenderId: "973100739981",
-            appId: "1:973100739981:web:63d7d2acd2b715a70561c4",
-            databaseURL: "https://my-apps-1a158-default-rtdb.firebaseio.com/"
+            apiKey: "AIzaSyBiG7ssePTyaKavznWmQsdpAq4Q2NUWyeA",
+            authDomain: "my-app-7e2b8.firebaseapp.com",
+            databaseURL: "https://my-app-7e2b8-default-rtdb.firebaseio.com",
+            projectId: "my-app-7e2b8",
+            storageBucket: "my-app-7e2b8.firebasestorage.app",
+            messagingSenderId: "683941019095",
+            appId: "1:683941019095:web:6a82c99ca567aada679f92"
         };
         
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        const db = firebase.firestore();
+        
+        // URL থেকে প্যারামিটার নেওয়া
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('orderId');
+        const amount = urlParams.get('amount') || "0";
+        const method = urlParams.get('method') || "nagad";
         
         const amountSpan = document.getElementById('display-amount');
         const numberSpan = document.getElementById('display-number');
+        const bannerList = document.getElementById('banner-list');
         const trxInput = document.getElementById('trx-input');
         const submitBtn = document.getElementById('submit-btn');
-        const paymentTypeBadge = document.getElementById('payment-type-badge');
-        const videoHelpContainer = document.getElementById('video-help-container');
-        const videoHelpText = document.getElementById('video-help-text');
-        
-        let currentVideoLink = "";
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const amount = urlParams.get('amount') || "0";
-        const type = urlParams.get('type') || "delivery";
-        const orderId = urlParams.get('orderId') || "";
+        const orderIdSpan = document.getElementById('order-id');
         
         amountSpan.innerText = amount;
+        if(orderId) orderIdSpan.innerText = orderId.substring(0, 8) + '...';
         
-        if(type === 'deposit') {
-            paymentTypeBadge.textContent = "ডিপোজিট (টাকা জমা)";
-            paymentTypeBadge.className = "payment-type-badge payment-type-deposit";
-        } else {
-            paymentTypeBadge.textContent = "ডেলিভারি চার্জ";
-            paymentTypeBadge.className = "payment-type-badge payment-type-delivery";
-        }
-        
-        function showToast(message, isError = false) {
-            const toast = document.getElementById('toastMsg');
-            toast.innerText = message;
-            toast.style.background = isError ? "rgba(220, 38, 38, 0.95)" : "rgba(31, 41, 55, 0.95)";
-            toast.className = "toast-custom show";
-            setTimeout(() => toast.className = "toast-custom", 3000);
-        }
-        
-        function openVideo() {
-            if(currentVideoLink) {
-                window.open(currentVideoLink, '_blank');
-            } else {
-                showToast("❌ ভিডিও লিংক পাওয়া যায়নি!", true);
-            }
-        }
-        
-        async function isTrxIdUnique(trxId) {
-            if(!trxId) return false;
-            const upperTrx = trxId.toUpperCase().trim();
-            try {
-                const snapshot = await db.ref('payment_requests').orderByChild('transactionId').equalTo(upperTrx).once('value');
-                return !snapshot.exists();
-            } catch(err) { return false; }
-        }
-        
-        window.sendPayment = async function() {
-            const trx = trxInput.value.trim();
-            if(!trx) {
-                showToast("❌ TrxID দিন!", true);
-                return;
-            }
-            
-            const finalTrx = trx.toUpperCase();
-            const payAmount = parseFloat(amount);
-            
-            submitBtn.innerHTML = `<span class="loading-spinner"></span> যাচাই করা হচ্ছে...`;
-            submitBtn.disabled = true;
-            
-            try {
-                const isUnique = await isTrxIdUnique(finalTrx);
-                if(!isUnique) {
-                    showToast("⚠️ এই TrxID আগেই ব্যবহার করা হয়েছে!", true);
-                    submitBtn.innerHTML = `পেমেন্ট নিশ্চিত করুন`;
-                    submitBtn.disabled = false;
-                    trxInput.value = "";
-                    return;
+        // ব্যানার লোড
+        db.collection("settings").doc("banners").onSnapshot((doc) => {
+            if(doc.exists) {
+                const data = doc.data();
+                let bannerHTML = '';
+                for(let i=1; i<=6; i++) {
+                    const imgUrl = data[`img${i}`];
+                    if(imgUrl) {
+                        bannerHTML += `<img src="${imgUrl}" class="banner-img" alt="Step ${i}">`;
+                    }
                 }
-                
-                await db.ref('payment_requests').push().set({
-                    transactionId: finalTrx,
-                    amount: payAmount,
-                    method: "Nagad",
-                    type: type,
-                    orderId: orderId,
-                    status: "pending",
-                    createdAt: new Date().toISOString()
-                });
-                
-                if(type === 'delivery') {
-                    await db.ref('delivery_requests').push().set({
-                        transactionId: finalTrx,
-                        amount: payAmount,
-                        method: "Nagad",
-                        orderId: orderId,
-                        status: "pending",
-                        createdAt: new Date().toISOString()
-                    });
-                } else if(type === 'deposit') {
-                    await db.ref('deposit_requests').push().set({
-                        transactionId: finalTrx,
-                        amount: payAmount,
-                        method: "Nagad",
-                        status: "pending",
-                        createdAt: new Date().toISOString()
-                    });
-                }
-                
-                showToast(`✅ ${type === 'deposit' ? 'ডিপোজিট' : 'পেমেন্ট'} রিকোয়েস্ট সফল!`);
-                trxInput.value = "";
-                submitBtn.innerHTML = `পেমেন্ট নিশ্চিত করুন`;
-                submitBtn.disabled = false;
-                
-                setTimeout(() => window.location.href = "https://lifegrowbd.com/", 2000);
-                
-            } catch (err) {
-                showToast("❌ পেমেন্ট জমা দিতে ব্যর্থ!", true);
-                submitBtn.innerHTML = `পেমেন্ট নিশ্চিত করুন`;
-                submitBtn.disabled = false;
-            }
-        };
-        
-        db.ref('settings').on('value', (snapshot) => {
-            const settings = snapshot.val();
-            if(settings) {
-                numberSpan.innerText = settings.nagadNumber || "01750069517";
-                currentVideoLink = settings.nagadVideoLink || "";
-                if(currentVideoLink) {
-                    videoHelpContainer.style.display = "block";
-                    videoHelpText.innerHTML = "🎥 কিভাবে পেমেন্ট করবেন? ভিডিও দেখে আসুন";
-                } else {
-                    videoHelpContainer.style.display = "none";
-                }
-            } else {
-                numberSpan.innerText = "01750069517";
-                videoHelpContainer.style.display = "none";
+                bannerList.innerHTML = bannerHTML || '<p class="text-xs text-gray-400">ব্যানার পাওয়া যায়নি</p>';
             }
         });
-        
+
+        // নগদ নম্বর লোড
+        db.collection("settings").doc("nagad").onSnapshot((doc) => {
+            if(doc.exists && doc.data().number) {
+                numberSpan.innerText = doc.data().number;
+            } else {
+                numberSpan.innerText = "নম্বর সেট নেই";
+            }
+        });
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toastMsg');
+            toast.innerText = msg;
+            toast.style.background = isError ? "#ef4444" : "#1F2937";
+            toast.className = "toast-custom show";
+            setTimeout(() => { toast.className = "toast-custom"; }, 2500);
+        }
+
         window.copyNumber = function() {
-            let numberText = numberSpan.innerText;
-            if(!numberText || numberText === "লোড হচ্ছে...") { showToast("❌ নম্বর পাওয়া যায়নি", true); return; }
-            navigator.clipboard.writeText(numberText.replace(/[^\d+]/g, '')).then(() => showToast("📋 নগদ নম্বর কপি হয়েছে!"));
+            if(numberSpan.innerText.includes("লোড") || numberSpan.innerText === "নম্বর সেট নেই") return;
+            navigator.clipboard.writeText(numberSpan.innerText).then(() => {
+                showToast("📋 নগদ নম্বর কপি হয়েছে!");
+            });
         };
-        
-        trxInput.addEventListener("input", function(e) { this.value = this.value.toUpperCase(); });
-        trxInput.addEventListener("keypress", (e) => { if(e.key === "Enter") sendPayment(); });
-        
-        console.log("✅ নগদ পেমেন্ট সিস্টেম রেডি | টাইপ:", type);
+
+        window.sendPayment = async function() {
+            const trx = trxInput.value.trim().toUpperCase();
+            if(!trx) return showToast("❌ TrxID লিখুন!", true);
+            
+            if(!orderId) {
+                showToast("⚠️ অর্ডার আইডি নেই! শুধু পেমেন্ট রেকর্ড করা হবে।", true);
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span class="loading-spinner mr-2"></span> যাচাই হচ্ছে...`;
+
+            try {
+                const check = await db.collection("payments").where("trxid", "==", trx).get();
+                if(!check.empty) {
+                    showToast("⚠️ এই TrxID আগেই ব্যবহার হয়েছে!", true);
+                } else {
+                    await db.collection("payments").add({
+                        trxid: trx,
+                        amount: amount,
+                        method: method,
+                        orderId: orderId || null,
+                        status: "Pending",
+                        time: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    if(orderId) {
+                        await db.collection("orders").doc(orderId).update({
+                            trx: trx,
+                            paymentStatus: "completed",
+                            paymentTime: new Date().toISOString()
+                        });
+                        showToast("✅ পেমেন্ট সফল! অর্ডার কনফার্ম হয়েছে!");
+                    } else {
+                        showToast("✅ পেমেন্ট রেকর্ড করা হয়েছে!");
+                    }
+                    
+                    trxInput.value = "";
+                    
+                    setTimeout(() => {
+                        window.close();
+                    }, 2000);
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("❌ নেটওয়ার্ক ত্রুটি!", true);
+            }
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "পেমেন্ট নিশ্চিত করুন";
+        };
+
+        trxInput.addEventListener("input", function() { this.value = this.value.toUpperCase(); });
     </script>
 </body>
-</html>
+    </html>                    
+                
